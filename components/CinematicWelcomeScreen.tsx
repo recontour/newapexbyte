@@ -204,6 +204,7 @@ export default function CinematicWelcomeScreen() {
     let touchStartY = 0;
 
     const handleWheel = (e: WheelEvent) => {
+      if (document.body.classList.contains("restaurant-active")) return;
       const targetTop = containerRef.current ? containerRef.current.offsetHeight : window.innerHeight;
       if (e.deltaY > 8 && window.scrollY < targetTop * 0.5 && !isSnapping) {
         scrollToTarget(targetTop);
@@ -211,12 +212,14 @@ export default function CinematicWelcomeScreen() {
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      if (document.body.classList.contains("restaurant-active")) return;
       if (e.touches.length > 0) {
         touchStartY = e.touches[0].clientY;
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (document.body.classList.contains("restaurant-active")) return;
       if (e.changedTouches.length > 0) {
         const touchEndY = e.changedTouches[0].clientY;
         const diff = touchStartY - touchEndY;
@@ -233,17 +236,19 @@ export default function CinematicWelcomeScreen() {
     window.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     const tick = (now: number) => {
-      if (!entranceDone) {
-        runEntrance(now);
-      }
+      if (!document.body.classList.contains("restaurant-active")) {
+        if (!entranceDone) {
+          runEntrance(now);
+        }
 
-      const targetTop = containerRef.current ? containerRef.current.offsetHeight : window.innerHeight;
-      const raw = Math.max(0, Math.min(1, window.scrollY / targetTop));
-      // Damped liquid lerp coefficient (0.045) for calm visual weight
-      currentScrollProgress = lerp(currentScrollProgress, raw, 0.045);
+        const targetTop = containerRef.current ? containerRef.current.offsetHeight : window.innerHeight;
+        const raw = Math.max(0, Math.min(1, window.scrollY / targetTop));
+        // Damped liquid lerp coefficient (0.045) for calm visual weight
+        currentScrollProgress = lerp(currentScrollProgress, raw, 0.045);
 
-      if (currentScrollProgress > 0.001 || entranceDone) {
-        applyScroll(currentScrollProgress);
+        if (currentScrollProgress > 0.001 || entranceDone) {
+          applyScroll(currentScrollProgress);
+        }
       }
 
       rafId = requestAnimationFrame(tick);

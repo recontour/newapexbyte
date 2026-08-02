@@ -21,11 +21,30 @@ export default function ComingSoonExperience({
   // Lock body scroll and suppress APEXBYTE fixed header when open
   useEffect(() => {
     const origOverflow = document.body.style.overflow;
+    const origPosition = document.body.style.position;
+    const origWidth = document.body.style.width;
+    const origHeight = document.body.style.height;
+
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+    document.body.style.height = "100%";
     document.body.classList.add("restaurant-active");
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault();
+    };
+
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
     return () => {
       document.body.style.overflow = origOverflow;
+      document.body.style.position = origPosition;
+      document.body.style.width = origWidth;
+      document.body.style.height = origHeight;
       document.body.classList.remove("restaurant-active");
+
+      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
 
@@ -35,6 +54,10 @@ export default function ComingSoonExperience({
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
     >
       <div className="coming-soon-experience-container">
         {/* Top Header with Restrained Close Control */}

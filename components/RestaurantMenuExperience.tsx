@@ -101,14 +101,61 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
   const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Lock body scroll and add active class when restaurant experience is open
+  // Lock body scroll and prevent overscroll rubber-banding elasticity
   useEffect(() => {
     const origOverflow = document.body.style.overflow;
+    const origPosition = document.body.style.position;
+    const origWidth = document.body.style.width;
+    const origHeight = document.body.style.height;
+
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+    document.body.style.height = "100%";
     document.body.classList.add("restaurant-active");
+
+    let startTouchY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        startTouchY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const scrollEl = scrollRef.current;
+      if (!scrollEl || e.touches.length === 0) return;
+
+      const currentY = e.touches[0].clientY;
+      const isDraggingDown = currentY > startTouchY;
+      const isDraggingUp = currentY < startTouchY;
+
+      // Prevent rubber-band pulling down when at top of menu
+      if (isDraggingDown && scrollEl.scrollTop <= 0) {
+        if (e.cancelable) e.preventDefault();
+      }
+
+      // Prevent overscroll pull at bottom of menu
+      if (
+        isDraggingUp &&
+        scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1
+      ) {
+        if (e.cancelable) e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
     return () => {
       document.body.style.overflow = origOverflow;
+      document.body.style.position = origPosition;
+      document.body.style.width = origWidth;
+      document.body.style.height = origHeight;
       document.body.classList.remove("restaurant-active");
+
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
 
@@ -298,6 +345,10 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
     >
       {/* WebGL Ambient Depth Canvas Overlay */}
       <canvas ref={canvasRef} className="restaurant-ambient-canvas" />
