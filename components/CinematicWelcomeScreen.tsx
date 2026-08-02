@@ -5,23 +5,19 @@ import React, { useRef, useEffect } from "react";
 /**
  * Cinematic Welcome Screen
  *
- * Entrance timeline + liquid-damped scroll/swipe snap transition.
- * Features custom 1.4s damped rAF smooth scrolling + 0.045 heavy liquid lerp
- * for a calm, unhurried, spring-cushioned transition into the showcase header.
+ * Clean landing section entrance timeline + smooth scroll fade out.
+ * No floating/flying header elements — text is centered and fades cleanly on scroll.
  */
 export default function CinematicWelcomeScreen() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const placeholderRef = useRef<HTMLDivElement>(null);
 
   // Entrance clip-mask inner refs
   const welcomeClipRef = useRef<HTMLDivElement>(null);
-
-  // Floating fixed APEXBYTE + inner clip container
-  const apexFixedRef = useRef<HTMLDivElement>(null);
-  const apexFixedInnerRef = useRef<HTMLDivElement>(null);
+  const apexClipRef = useRef<HTMLDivElement>(null);
 
   // Layout refs
   const welcomeRef = useRef<HTMLDivElement>(null);
+  const apexRef = useRef<HTMLDivElement>(null);
   const dividerRef = useRef<HTMLDivElement>(null);
   const dividerLineRef = useRef<HTMLDivElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
@@ -34,34 +30,11 @@ export default function CinematicWelcomeScreen() {
     let entranceDone = false;
     let isSnapping = false;
 
-    let startX = 0;
-    let startY = 0;
-
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
     const map01 = (v: number, lo: number, hi: number) => clamp01((v - lo) / (hi - lo));
     const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
     const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const getVScale = () =>
-      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vscale") || "1");
-
-    const measure = () => {
-      if (placeholderRef.current) {
-        const r = placeholderRef.current.getBoundingClientRect();
-        startX = r.left;
-        startY = r.top;
-      }
-    };
-
-    measure();
-    document.fonts.ready.then(() => {
-      measure();
-      if (apexFixedRef.current) {
-        apexFixedRef.current.style.transform = `translate(${startX}px, ${startY}px) scale(1)`;
-      }
-    });
-    window.addEventListener("resize", measure);
 
     // ── Entrance Timeline (Total ~2.8s) ──
     const ENTRANCE = {
@@ -92,12 +65,9 @@ export default function CinematicWelcomeScreen() {
 
       // APEXBYTE
       const aP = easeOutQuart(map01(elapsed, ENTRANCE.apexStart, ENTRANCE.apexEnd));
-      if (apexFixedInnerRef.current) {
-        apexFixedInnerRef.current.style.transform = `translateY(${(1 - aP) * 110}%)`;
-      }
-      if (apexFixedRef.current) {
-        apexFixedRef.current.style.transform = `translate(${startX}px, ${startY}px) scale(1)`;
-        apexFixedRef.current.style.opacity = `${aP}`;
+      if (apexClipRef.current) {
+        apexClipRef.current.style.transform = `translateY(${(1 - aP) * 110}%)`;
+        apexClipRef.current.style.opacity = `${aP}`;
       }
 
       // Divider
@@ -127,11 +97,8 @@ export default function CinematicWelcomeScreen() {
       }
     };
 
-    // ── Heavy Liquid Damped Scroll Visual Transformation ──
+    // ── Smooth Scroll Fade Out ──
     const applyScroll = (p: number) => {
-      const vs = getVScale();
-      const isMobile = window.innerWidth < 768;
-
       const fadeP = 1 - map01(p, 0, 0.45);
       const drift = -p * 60;
 
@@ -142,6 +109,15 @@ export default function CinematicWelcomeScreen() {
       if (welcomeClipRef.current) {
         welcomeClipRef.current.style.transform = "translateY(0)";
         welcomeClipRef.current.style.opacity = "1";
+      }
+
+      if (apexRef.current) {
+        apexRef.current.style.opacity = `${fadeP}`;
+        apexRef.current.style.transform = `translateY(${drift * 0.4}px)`;
+      }
+      if (apexClipRef.current) {
+        apexClipRef.current.style.transform = "translateY(0)";
+        apexClipRef.current.style.opacity = "1";
       }
 
       if (dividerRef.current) {
@@ -158,22 +134,6 @@ export default function CinematicWelcomeScreen() {
       if (scrollCueRef.current) {
         scrollCueRef.current.style.opacity = `${1 - map01(p, 0, 0.25)}`;
       }
-
-      // APEXBYTE moves with heavy damped easeOutQuart curve to top-left corner
-      const moveP = easeOutQuart(map01(p, 0.02, 0.92));
-      const endX = vs * (isMobile ? 20 : 40);
-      const endY = vs * (isMobile ? 24 : 36);
-      const scaleEnd = isMobile ? 22 / 46 : 36 / 138;
-
-      if (apexFixedRef.current) {
-        const curX = lerp(startX, endX, moveP);
-        const curY = lerp(startY, endY, moveP);
-        const curScale = lerp(1, scaleEnd, moveP);
-        apexFixedRef.current.style.transform = `translate(${curX}px, ${curY}px) scale(${curScale})`;
-      }
-      if (apexFixedInnerRef.current) {
-        apexFixedInnerRef.current.style.transform = "translateY(0)";
-      }
     };
 
     // ── Custom Damped Smooth Scroll Engine (1400ms duration) ──
@@ -182,7 +142,7 @@ export default function CinematicWelcomeScreen() {
       const startScrollY = window.scrollY;
       const distance = targetY - startScrollY;
       const startTime = performance.now();
-      const duration = 1400; // ms — calm, unhurried glide
+      const duration = 1400;
 
       const stepScroll = (now: number) => {
         const elapsed = now - startTime;
@@ -243,7 +203,6 @@ export default function CinematicWelcomeScreen() {
 
         const targetTop = containerRef.current ? containerRef.current.offsetHeight : window.innerHeight;
         const raw = Math.max(0, Math.min(1, window.scrollY / targetTop));
-        // Damped liquid lerp coefficient (0.045) for calm visual weight
         currentScrollProgress = lerp(currentScrollProgress, raw, 0.045);
 
         if (currentScrollProgress > 0.001 || entranceDone) {
@@ -258,7 +217,6 @@ export default function CinematicWelcomeScreen() {
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", measure);
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
@@ -266,87 +224,63 @@ export default function CinematicWelcomeScreen() {
   }, []);
 
   return (
-    <>
-      {/* Fixed APEXBYTE header */}
-      <div
-        ref={apexFixedRef}
-        className="apex-fixed-header"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          transformOrigin: "0 0",
-          zIndex: 100,
-          pointerEvents: "none",
-          willChange: "transform",
-          opacity: 0,
-          overflow: "hidden",
-        }}
-      >
-        <div ref={apexFixedInnerRef} style={{ transform: "translateY(110%)" }}>
-          <h1 className="hero-title" style={{ margin: 0, lineHeight: 1 }}>
-            <span className="hero-word" style={{ marginRight: 0 }}>
-              APEX<span style={{ color: "#3FB9EB" }}>BYTE</span>
-            </span>
-          </h1>
-        </div>
-      </div>
+    <div ref={containerRef} className="welcome-container">
+      <main className="hero-main" style={{ position: "relative", zIndex: 12 }}>
 
-      {/* 100vh Landing Container */}
-      <div ref={containerRef} className="welcome-container">
-        <main className="hero-main" style={{ position: "relative", zIndex: 12 }}>
-
-          {/* WELCOME TO */}
-          <div ref={welcomeRef} className="hero-line1-container" style={{ overflow: "hidden" }}>
-            <div ref={welcomeClipRef} style={{ transform: "translateY(110%)", opacity: 0 }}>
-              <div className="hero-title" style={{ display: "flex", gap: "0.22em", justifyContent: "center" }}>
-                <span className="hero-word">WELCOME</span>
-                <span className="hero-word">TO</span>
-              </div>
+        {/* WELCOME TO */}
+        <div ref={welcomeRef} className="hero-line1-container" style={{ overflow: "hidden" }}>
+          <div ref={welcomeClipRef} style={{ transform: "translateY(110%)", opacity: 0 }}>
+            <div className="hero-title" style={{ display: "flex", gap: "0.22em", justifyContent: "center" }}>
+              <span className="hero-word">WELCOME</span>
+              <span className="hero-word">TO</span>
             </div>
           </div>
-
-          {/* Placeholder for APEXBYTE */}
-          <div ref={placeholderRef} style={{ visibility: "hidden" }}>
-            <div className="hero-title" style={{ margin: 0, lineHeight: 1 }}>
-              <span className="hero-word" style={{ marginRight: 0 }}>APEXBYTE</span>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div ref={dividerRef} className="hero-divider" style={{ opacity: 0 }}>
-            <div
-              ref={dividerLineRef}
-              style={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: "rgba(255, 255, 255, 0.15)",
-                transform: "scaleX(0)",
-                transformOrigin: "center",
-              }}
-            />
-          </div>
-
-          {/* Tagline */}
-          <div ref={taglineRef} style={{ overflow: "hidden" }}>
-            <p
-              ref={taglineInnerRef}
-              className="hero-subtitle"
-              style={{ transform: "translateY(100%)", opacity: 0 }}
-            >
-              We shape your ideas
-            </p>
-          </div>
-
-        </main>
-
-        {/* Scroll Cue */}
-        <div ref={scrollCueRef} className="scroll-cue" style={{ opacity: 0 }}>
-          <span className="scroll-cue-text">Scroll</span>
-          <div className="scroll-cue-line" />
         </div>
 
+        {/* APEXBYTE */}
+        <div ref={apexRef} style={{ overflow: "hidden" }}>
+          <div ref={apexClipRef} style={{ transform: "translateY(110%)", opacity: 0 }}>
+            <h1 className="hero-title" style={{ margin: 0, lineHeight: 1 }}>
+              <span className="hero-word" style={{ marginRight: 0 }}>
+                APEX<span style={{ color: "#3FB9EB" }}>BYTE</span>
+              </span>
+            </h1>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div ref={dividerRef} className="hero-divider" style={{ opacity: 0 }}>
+          <div
+            ref={dividerLineRef}
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(255, 255, 255, 0.15)",
+              transform: "scaleX(0)",
+              transformOrigin: "center",
+            }}
+          />
+        </div>
+
+        {/* Tagline */}
+        <div ref={taglineRef} style={{ overflow: "hidden" }}>
+          <p
+            ref={taglineInnerRef}
+            className="hero-subtitle"
+            style={{ transform: "translateY(100%)", opacity: 0 }}
+          >
+            We shape your ideas
+          </p>
+        </div>
+
+      </main>
+
+      {/* Scroll Cue */}
+      <div ref={scrollCueRef} className="scroll-cue" style={{ opacity: 0 }}>
+        <span className="scroll-cue-text">Scroll</span>
+        <div className="scroll-cue-line" />
       </div>
-    </>
+
+    </div>
   );
 }

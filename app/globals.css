@@ -181,7 +181,7 @@ body {
   z-index: 20;
   width: 100%;
   min-height: 100vh;
-  padding-top: calc(var(--vscale) * 90px);
+  padding-top: calc(var(--vscale) * 60px);
   padding-bottom: calc(var(--vscale) * 100px);
   padding-left: calc(var(--vscale) * 40px);
   padding-right: calc(var(--vscale) * 40px);
@@ -546,7 +546,7 @@ body.restaurant-active .apex-fixed-header {
   }
 
   .showcase-section {
-    padding-top: calc(var(--vscale) * 70px);
+    padding-top: calc(var(--vscale) * 40px);
     padding-bottom: calc(var(--vscale) * 80px);
     padding-left: calc(var(--vscale) * 20px);
     padding-right: calc(var(--vscale) * 20px);
