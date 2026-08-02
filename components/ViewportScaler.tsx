@@ -8,16 +8,8 @@ import { useEffect } from "react";
  * Calculates a single `--vscale` CSS custom property on :root that
  * represents a uniform scale factor relative to a fixed design canvas.
  *
- * All typography and spacing that uses `calc(var(--vscale) * <design-px>)`
- * will render at the exact same visual proportion on every device —
- * regardless of resolution, aspect ratio, or orientation.
- *
- * Design canvases:
- *   Desktop (landscape):  1920 × 1080
- *   Mobile  (portrait):    390 ×  844
- *
- * Scale = min(viewportW / designW, viewportH / designH)
- * This ensures the design always fits without overflow on any screen.
+ * On mobile devices, prevents height-jump shifts caused by Android / iOS
+ * address bar collapse & expansion by locking scale updates to true width / orientation changes.
  */
 
 const DESKTOP_W = 1920;
@@ -26,15 +18,28 @@ const MOBILE_W = 390;
 const MOBILE_H = 844;
 const BREAKPOINT = 768; // px — below this we use mobile canvas
 
+let initialMobileVh: number | null = null;
+let lastWidth: number | null = null;
+
 function computeScale(): number {
   const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  let vh = window.innerHeight;
 
   const isMobile = vw < BREAKPOINT;
+
+  // On mobile, lock vh on load so address bar show/hide doesn't jump layout
+  if (isMobile) {
+    if (!initialMobileVh || lastWidth !== vw) {
+      initialMobileVh = vh;
+      lastWidth = vw;
+    } else {
+      vh = initialMobileVh;
+    }
+  }
+
   const designW = isMobile ? MOBILE_W : DESKTOP_W;
   const designH = isMobile ? MOBILE_H : DESKTOP_H;
 
-  // Uniform scale: fit the design canvas into the viewport
   return Math.min(vw / designW, vh / designH);
 }
 
@@ -50,14 +55,33 @@ export default function ViewportScaler() {
 
     update();
 
-    window.addEventListener("resize", update, { passive: true });
-    window.addEventListener("orientationchange", update);
+    const handleResize = () => {
+      const currentWidth = window.innerWidth;
+      const isMobile = currentWidth < BREAKPOINT;
+
+      // On mobile, ignore height-only resize events (caused by address bar show/hide)
+      if (isMobile && lastWidth === currentWidth) {
+        return;
+      }
+
+      lastWidth = currentWidth;
+      update();
+    };
+
+    const handleOrientationChange = () => {
+      initialMobileVh = null; // Reset on orientation change
+      lastWidth = null;
+      setTimeout(update, 100);
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("orientationchange", handleOrientationChange);
 
     return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleOrientationChange);
     };
   }, []);
 
-  return null; // This component renders nothing — it only sets the CSS variable
+  return null;
 }
