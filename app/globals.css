@@ -22,8 +22,6 @@ html {
   width: 100%;
   min-height: 100%;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
-  touch-action: pan-y;
   background-color: #000000;
   color: #ffffff;
   font-family: 'Syne', sans-serif;
@@ -35,8 +33,6 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
-  touch-action: pan-y;
   background-color: #000000;
   color: #ffffff;
 }
