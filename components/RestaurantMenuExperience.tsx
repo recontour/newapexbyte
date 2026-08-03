@@ -109,15 +109,24 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
   const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Lock body scroll and prevent overscroll rubber-banding elasticity
+  // Lock body scroll without breaking mobile fixed-position hit targets.
+  // Preserving scrollY via top: -scrollY is required on iOS — without it,
+  // position:fixed overlays paint in one place and receive taps in another.
   useEffect(() => {
+    const scrollY = window.scrollY;
     const origOverflow = document.body.style.overflow;
     const origPosition = document.body.style.position;
+    const origTop = document.body.style.top;
+    const origLeft = document.body.style.left;
+    const origRight = document.body.style.right;
     const origWidth = document.body.style.width;
     const origHeight = document.body.style.height;
 
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
     document.body.style.width = "100%";
     document.body.style.height = "100%";
     document.body.classList.add("restaurant-active");
@@ -131,8 +140,13 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as Node | null;
       const scrollEl = scrollRef.current;
-      if (!scrollEl || e.touches.length === 0) return;
+
+      // Only guard the menu scroller — never block touches on floating CTAs / modals
+      if (!scrollEl || !target || !scrollEl.contains(target) || e.touches.length === 0) {
+        return;
+      }
 
       const currentY = e.touches[0].clientY;
       const isDraggingDown = currentY > startTouchY;
@@ -158,12 +172,18 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     return () => {
       document.body.style.overflow = origOverflow;
       document.body.style.position = origPosition;
+      document.body.style.top = origTop;
+      document.body.style.left = origLeft;
+      document.body.style.right = origRight;
       document.body.style.width = origWidth;
       document.body.style.height = origHeight;
       document.body.classList.remove("restaurant-active");
 
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
+
+      // Restore scroll position after releasing the lock
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -374,8 +394,11 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     >
       <motion.div
         className={`restaurant-mobile-portrait-card ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
+        // Opacity-only entrance: any transform on this card creates a containing
+        // block that traps position:fixed children (kitchen/floor CTAs) and offsets
+        // touch hit-targets on mobile Safari.
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
         {/* WebGL Ambient Depth Canvas Overlay */}

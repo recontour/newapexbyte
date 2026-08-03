@@ -7,6 +7,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Required for env(safe-area-inset-*) so bottom CTAs clear the home indicator
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
