@@ -612,8 +612,8 @@ body.restaurant-active .showcase-section.is-selected-view {
 }
 
 /* ═══════════════════════════════════════════════════════════ */
-/*  MOBILE PORTRAIT VIEWPORT CONTAINER FOR RESTAURANT ROOM    */
-/*  Transparent shell so the global WebGL starfield shows through */
+/*  RESTAURANT FLOW — full-viewport host + mobile column shell */
+/*  Transparent host so WebGL shows; all views live in one column */
 /* ═══════════════════════════════════════════════════════════ */
 .restaurant-experience-container {
   position: fixed !important;
@@ -623,77 +623,85 @@ body.restaurant-active .showcase-section.is-selected-view {
   z-index: 999999 !important;
   width: 100% !important;
   width: 100dvw !important;
-  /* 100vh fails on mobile (URL bar / home indicator). Prefer dynamic viewport. */
   height: 100% !important;
   height: 100vh !important;
   height: 100dvh !important;
   background: transparent;
   color: #ffffff;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   overflow: hidden;
   box-sizing: border-box;
-  padding: calc(var(--vscale) * 12px);
-  /* Keep fixed overlay aligned to the visual viewport on iOS */
+  padding: 0;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
-/* Stack navigator stage — clips simultaneous side-slide transitions */
 .restaurant-experience-container.flow-stage {
   overflow: hidden !important;
   isolation: isolate;
 }
 
-/* Shared panel chrome for menu / kitchen / floor / owner slides */
-.flow-slide-panel {
-  will-change: transform, opacity;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-/* Mobile Frame Wrapper on PC/Desktop — glass frame, no solid fill */
-.restaurant-experience-container > div:first-child,
-.restaurant-mobile-portrait-card {
+/* Single vertical column — PC + mobile. No decorative phone frame. */
+.restaurant-mobile-column {
   position: relative;
   width: 100%;
   max-width: 430px;
   height: 100%;
-  max-height: 92vh;
-  max-height: 92dvh;
+  overflow: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+}
+
+/* Every flow screen fills the column (absolute stack for side-slides) */
+.restaurant-mobile-portrait-card,
+.kitchen-view-fullscreen,
+.floor-view-fullscreen,
+.manager-view-fullscreen,
+.flow-slide-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.flow-slide-panel {
+  will-change: transform, opacity;
+}
+
+/* Menu panel — no border frame, just the column content */
+.restaurant-mobile-portrait-card {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: calc(var(--vscale) * 24px);
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  isolation: isolate; /* stack floating CTAs above menu without trapping fixed descendants via transform */
+  isolation: isolate;
   touch-action: pan-y;
   overscroll-behavior: contain !important;
   overscroll-behavior-y: contain !important;
   -webkit-overflow-scrolling: touch;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
-  transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
 }
 
 @media (max-width: 480px) {
-  .restaurant-experience-container {
-    padding: 0 !important;
-    background: transparent !important;
-  }
-  .restaurant-experience-container > div:first-child,
-  .restaurant-mobile-portrait-card {
+  .restaurant-mobile-column {
     max-width: 100% !important;
-    max-height: none !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: transparent !important;
   }
 }
 
@@ -2144,29 +2152,17 @@ body.restaurant-active .showcase-section.is-selected-view {
 /*  FULLSCREEN BORDERLESS KITCHEN DISPLAY SYSTEM (KDS)        */
 /* ═══════════════════════════════════════════════════════════ */
 .kitchen-view-fullscreen {
-  position: fixed !important;
-  inset: 0 !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  width: 100dvw !important;
-  height: 100% !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 999999 !important;
+  /* Position/size come from shared .flow-slide-panel column rules */
+  z-index: 2;
   background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
   overflow: hidden;
-  box-sizing: border-box;
-  margin: 0 !important;
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .kitchen-view-header {
@@ -2806,29 +2802,17 @@ body.restaurant-active .showcase-section.is-selected-view {
 /*  FULLSCREEN MOBILE / TABLET FLOOR DISPLAY SYSTEM (FLOOR VIEW)  */
 /* ═══════════════════════════════════════════════════════════ */
 .floor-view-fullscreen {
-  position: fixed !important;
-  inset: 0 !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  width: 100dvw !important;
-  height: 100% !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 999999 !important;
+  /* Position/size come from shared .flow-slide-panel column rules */
+  z-index: 2;
   background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
   overflow: hidden;
-  box-sizing: border-box;
-  margin: 0 !important;
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .floor-view-header {
@@ -3585,29 +3569,17 @@ body.restaurant-active .showcase-section.is-selected-view {
 /*  FULLSCREEN MOBILE / TABLET MANAGER COMMAND CENTER VIEW     */
 /* ═══════════════════════════════════════════════════════════ */
 .manager-view-fullscreen {
-  position: fixed !important;
-  inset: 0 !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  width: 100dvw !important;
-  height: 100% !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 999999 !important;
+  /* Position/size come from shared .flow-slide-panel column rules */
+  z-index: 2;
   background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
   overflow: hidden;
-  box-sizing: border-box;
-  margin: 0 !important;
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .manager-view-header {

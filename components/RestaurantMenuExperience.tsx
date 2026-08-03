@@ -444,9 +444,10 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
       onTouchEnd={(e) => e.stopPropagation()}
     >
       {/*
-        Shared stack navigator: menu ⇄ kitchen ⇄ floor ⇄ owner.
-        mode="sync" so outgoing slides left while incoming glides in from the side.
+        Single mobile column: menu / kitchen / floor / owner all fill this
+        shell so PC + phone share the same layout and side-slide stack.
       */}
+      <div className="restaurant-mobile-column">
       <AnimatePresence mode="sync" custom={flowDirection} initial={false}>
       {/* Menu shell — unmounted while a deep view is active */}
       {!isDeepViewOpen && (
@@ -952,6 +953,7 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
           />
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
