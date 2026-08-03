@@ -1104,7 +1104,8 @@ body.restaurant-active {
   -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(110%);
   border: none;
   border-radius: calc(var(--vscale) * 12px);
-  padding: calc(var(--vscale) * 14px) calc(var(--vscale) * 22px);
+  padding: calc(var(--vscale) * 20px) calc(var(--vscale) * 30px);
+  min-height: calc(var(--vscale) * 48px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1215,7 +1216,7 @@ body.restaurant-active {
 
 .summary-price {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(var(--vscale) * 13px);
+  font-size: calc(var(--vscale) * 15px);
   font-weight: 500;
   color: #e4dacb;
   line-height: 1.2;
@@ -1248,7 +1249,7 @@ body.restaurant-active {
   -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(110%);
   border: none;
   border-radius: calc(var(--vscale) * 16px) calc(var(--vscale) * 16px) 0 0;
-  padding: calc(var(--vscale) * 24px);
+  padding: calc(var(--vscale) * 24px) calc(var(--vscale) * 24px) calc(var(--vscale) * 24px + env(safe-area-inset-bottom, 16px));
   max-height: 85%;
   display: flex;
   flex-direction: column;
@@ -1541,9 +1542,9 @@ body.restaurant-active {
   border: none;
   color: #09090b;
   border-radius: calc(var(--vscale) * 10px);
-  padding: calc(var(--vscale) * 14px);
+  padding: calc(var(--vscale) * 18px) calc(var(--vscale) * 14px);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(var(--vscale) * 13px);
+  font-size: calc(var(--vscale) * 16px);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1588,7 +1589,6 @@ body.restaurant-active {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--vscale) * 6px);
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.08),
@@ -1597,11 +1597,12 @@ body.restaurant-active {
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #e4dacb;
   border-radius: calc(var(--vscale) * 10px);
-  padding: calc(var(--vscale) * 14px) calc(var(--vscale) * 18px);
+  padding: calc(var(--vscale) * 18px) calc(var(--vscale) * 14px);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(var(--vscale) * 11px);
+  font-size: calc(var(--vscale) * 16px);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1664,8 +1665,51 @@ body.restaurant-active {
 }
 
 /* ═══════════════════════════════════════════════════════════ */
+/*  INLINE AI CHAT PANEL — inside order modal                 */
+/* ═══════════════════════════════════════════════════════════ */
+.inline-ai-panel {
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-top: calc(var(--vscale) * 14px);
+  padding-top: calc(var(--vscale) * 14px);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--vscale) * 10px);
+}
+
+.inline-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inline-ai-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: calc(var(--vscale) * 10px);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: rgba(228, 218, 203, 0.6);
+  text-transform: uppercase;
+}
+
+.inline-ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--vscale) * 8px);
+  max-height: calc(var(--vscale) * 180px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.inline-ai-input-row {
+  display: flex;
+  gap: calc(var(--vscale) * 8px);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
 /*  LIVE KITCHEN VIEW MODAL STYLING                           */
 /* ═══════════════════════════════════════════════════════════ */
+
 .kitchen-live-tag {
   display: flex;
   align-items: center;
@@ -1907,12 +1951,14 @@ body.restaurant-active {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  padding: calc(var(--vscale) * 8px) calc(var(--vscale) * 14px);
+  border-radius: calc(var(--vscale) * 8px);
+  padding: calc(var(--vscale) * 12px) calc(var(--vscale) * 14px);
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(var(--vscale) * 12px);
+  font-size: calc(var(--vscale) * 13px);
   outline: none;
+  min-height: calc(var(--vscale) * 44px);
+  box-sizing: border-box;
 }
 
 .ai-chat-input:focus {
@@ -1923,12 +1969,16 @@ body.restaurant-active {
   background: #e4dacb;
   border: none;
   color: #09090b;
-  border-radius: 9999px;
-  padding: 0 calc(var(--vscale) * 14px);
+  border-radius: calc(var(--vscale) * 8px);
+  padding: 0 calc(var(--vscale) * 18px);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(var(--vscale) * 11px);
+  font-size: calc(var(--vscale) * 12px);
   font-weight: 600;
+  letter-spacing: 0.06em;
   cursor: pointer;
+  min-height: calc(var(--vscale) * 44px);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Coming Soon Fullscreen View */

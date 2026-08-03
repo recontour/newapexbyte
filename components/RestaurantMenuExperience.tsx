@@ -95,9 +95,11 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>("Starters");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [inlineAiOpen, setInlineAiOpen] = useState(false);
   const [activeAiDish, setActiveAiDish] = useState<DishItem | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const inlineChatEndRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [floorModalOpen, setFloorModalOpen] = useState(false);
   const [managerModalOpen, setManagerModalOpen] = useState(false);
@@ -699,19 +701,19 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
                 <button
                   className="order-ai-help-btn"
                   onClick={() => {
-                    setActiveAiDish(null);
-                    setChatMessages([
-                      {
-                        id: "m1",
-                        sender: "assistant",
-                        text: "Namaste! I am your Culinary Curator. Have questions about your selected order or need recommendations? Ask me anything!",
-                      },
-                    ]);
-                    setAiDrawerOpen(true);
+                    if (!inlineAiOpen) {
+                      setChatMessages([
+                        {
+                          id: "m1",
+                          sender: "assistant",
+                          text: "Namaste! I am your Culinary Curator. Have questions about your selected order or need recommendations? Ask me anything!",
+                        },
+                      ]);
+                    }
+                    setInlineAiOpen((prev) => !prev);
                   }}
                 >
-                  <span>✨</span>
-                  <span>CURATOR AI</span>
+                  {inlineAiOpen ? "CLOSE AI" : "CURATOR AI"}
                 </button>
 
                 <button
@@ -721,6 +723,65 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
                   {orderConfirmed ? "ORDER CONFIRMED ✨" : "CONFIRM ORDER"}
                 </button>
               </div>
+
+              {/* Inline AI Chat Panel */}
+              <AnimatePresence>
+                {inlineAiOpen && (
+                  <motion.div
+                    key="inline-ai-panel"
+                    className="inline-ai-panel"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <div className="inline-ai-header">
+                      <span className="inline-ai-label">CULINARY CURATOR AI</span>
+                    </div>
+                    <div className="inline-ai-messages">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className={`ai-msg-bubble ${msg.sender}`}>
+                          {msg.text}
+                        </div>
+                      ))}
+                      <div ref={inlineChatEndRef} />
+                    </div>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const trimmed = chatInput.trim();
+                        if (!trimmed) return;
+                        const userMsg: ChatMessage = { id: `u${Date.now()}`, sender: "user", text: trimmed };
+                        const replies = [
+                          "Great choice! The Butter Paneer Masala pairs beautifully with a Garlic Naan.",
+                          "For a balanced meal, I'd recommend adding a light raita or lassi on the side.",
+                          "Our chef's special today is the Rogan Josh — slow-cooked for 4 hours.",
+                          "If you enjoy spice, the Kadai Vegetables bring a wonderful heat. Would you like to add it?",
+                          "Everything in your order looks wonderful! Is there anything else I can help with?",
+                        ];
+                        const aiMsg: ChatMessage = {
+                          id: `a${Date.now()}`,
+                          sender: "assistant",
+                          text: replies[Math.floor(Math.random() * replies.length)],
+                        };
+                        setChatMessages((prev) => [...prev, userMsg, aiMsg]);
+                        setChatInput("");
+                        setTimeout(() => inlineChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+                      }}
+                      className="inline-ai-input-row"
+                    >
+                      <input
+                        type="text"
+                        className="ai-chat-input"
+                        placeholder="Ask about your order..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                      />
+                      <button type="submit" className="ai-chat-send">ASK</button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}
