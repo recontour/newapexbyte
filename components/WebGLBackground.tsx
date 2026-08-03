@@ -7,7 +7,7 @@ import * as THREE from "three";
  * WebGLBackground — Subtle starfield
  *
  * Two soft particle layers with mouse + page scroll + restaurant-menu scroll parallax.
- * Near-field particles are kept small so the field stays calm, not noisy.
+ * Depth is clamped so near dots never balloon, but sizes stay readable on screen.
  */
 export default function WebGLBackground() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -22,13 +22,14 @@ export default function WebGLBackground() {
       60,
       window.innerWidth / window.innerHeight,
       1,
-      2000
+      2500
     );
     camera.position.z = 500;
 
     const renderer = new THREE.WebGLRenderer({
       antialias: false,
       powerPreference: "high-performance",
+      alpha: false,
     });
     renderer.setClearColor(0x000000, 1);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -38,42 +39,43 @@ export default function WebGLBackground() {
     renderer.domElement.style.pointerEvents = "none";
     container.appendChild(renderer.domElement);
 
-    // Soft glow — smaller bright core, quick falloff (less "blob" when close)
+    // Soft glow sprite — bright core, smooth falloff
     const c = document.createElement("canvas");
     c.width = 64;
     c.height = 64;
     const ctx = c.getContext("2d")!;
     const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, "rgba(255,255,255,0.95)");
-    grad.addColorStop(0.12, "rgba(255,255,255,0.55)");
-    grad.addColorStop(0.4, "rgba(255,255,255,0.12)");
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(0.18, "rgba(255,255,255,0.75)");
+    grad.addColorStop(0.45, "rgba(255,255,255,0.22)");
     grad.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 64, 64);
     const texture = new THREE.CanvasTexture(c);
 
-    // Keep particles away from the camera so sizeAttenuation never balloons them
-    const MIN_Z = -200; // closest (still ~700 units from camera at z=500)
-    const MAX_DUST_Z = -1400;
-    const MAX_STAR_Z = -1100;
+    // Camera at z=500. Place dots between ~z -100 and z -900 so they stay
+    // mid-field: visible, but not huge when sizeAttenuation is on.
+    const NEAR_Z = -120;
+    const FAR_DUST_Z = -900;
+    const FAR_STAR_Z = -750;
 
     // ── Layer 1: Dust field ──
-    const dustCount = 900;
+    const dustCount = 1100;
     const dustGeo = new THREE.BufferGeometry();
     const dustPos = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount; i++) {
-      dustPos[i * 3] = (Math.random() - 0.5) * 2000;
-      dustPos[i * 3 + 1] = (Math.random() - 0.5) * 1400;
-      // Bias toward mid/far field (sqrt → fewer near particles)
-      const t = Math.sqrt(Math.random());
-      dustPos[i * 3 + 2] = MIN_Z + t * (MAX_DUST_Z - MIN_Z);
+      dustPos[i * 3] = (Math.random() - 0.5) * 1800;
+      dustPos[i * 3 + 1] = (Math.random() - 0.5) * 1200;
+      // Mild bias to mid-depth (not extreme near, not invisible far)
+      const t = 0.25 + Math.random() * 0.75;
+      dustPos[i * 3 + 2] = NEAR_Z + t * (FAR_DUST_Z - NEAR_Z);
     }
     dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
     const dustMat = new THREE.PointsMaterial({
-      size: 2.4,
+      size: 4.2,
       map: texture,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.72,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       color: 0xffffff,
@@ -82,25 +84,25 @@ export default function WebGLBackground() {
     const dust = new THREE.Points(dustGeo, dustMat);
     scene.add(dust);
 
-    // ── Layer 2: Sparse accent stars ──
-    const starCount = 120;
+    // ── Layer 2: Accent stars ──
+    const starCount = 160;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
-      starPos[i * 3] = (Math.random() - 0.5) * 1800;
-      starPos[i * 3 + 1] = (Math.random() - 0.5) * 1200;
-      const t = Math.sqrt(Math.random());
-      starPos[i * 3 + 2] = MIN_Z + t * (MAX_STAR_Z - MIN_Z);
+      starPos[i * 3] = (Math.random() - 0.5) * 1600;
+      starPos[i * 3 + 1] = (Math.random() - 0.5) * 1000;
+      const t = 0.3 + Math.random() * 0.7;
+      starPos[i * 3 + 2] = NEAR_Z + t * (FAR_STAR_Z - NEAR_Z);
     }
     starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
     const starMat = new THREE.PointsMaterial({
-      size: 3.6,
+      size: 6.5,
       map: texture,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.88,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      color: 0xdde8ff,
+      color: 0xe4eeff,
       sizeAttenuation: true,
     });
     const stars = new THREE.Points(starGeo, starMat);
@@ -113,7 +115,6 @@ export default function WebGLBackground() {
     let smoothMouseY = 0;
     let pageScrollY = 0;
     let smoothPageScrollY = 0;
-    // Restaurant menu (and other nested scrollers) drive this via CustomEvent
     let overlayScrollY = 0;
     let smoothOverlayScrollY = 0;
     let halfW = window.innerWidth / 2;
@@ -134,7 +135,6 @@ export default function WebGLBackground() {
     };
     const onOverlayScroll = (e: Event) => {
       const detail = (e as CustomEvent<{ scrollTop?: number; progress?: number }>).detail;
-      // Map menu scrollTop → subtle field shift (keeps motion calm)
       overlayScrollY = (detail?.scrollTop ?? 0) * 0.22;
     };
 
@@ -152,6 +152,9 @@ export default function WebGLBackground() {
     };
     window.addEventListener("resize", onResize);
 
+    // Seed page scroll so field is correct on first frame after load mid-page
+    pageScrollY = window.scrollY;
+
     const clock = new THREE.Clock();
     let frameId: number;
 
@@ -164,20 +167,16 @@ export default function WebGLBackground() {
       smoothPageScrollY += (pageScrollY - smoothPageScrollY) * 0.1;
       smoothOverlayScrollY += (overlayScrollY - smoothOverlayScrollY) * 0.08;
 
-      // Gentle mouse parallax (muted so it never competes with UI)
       camera.position.x = smoothMouseX * 90;
       camera.position.y = -smoothMouseY * 55;
-      camera.lookAt(scene.position);
+      camera.lookAt(0, 0, -400);
 
-      // Page scroll + nested menu scroll, different layer speeds
       const scrollOffset = smoothPageScrollY * 0.35 + smoothOverlayScrollY;
       dust.position.y = scrollOffset * 0.45;
       stars.position.y = scrollOffset * 0.75;
-      // Tiny lateral drift from overlay scroll so motion feels dimensional
       dust.position.x = smoothOverlayScrollY * 0.04;
       stars.position.x = smoothOverlayScrollY * 0.07;
 
-      // Very slow continuous drift
       dust.rotation.y = t * 0.01;
       dust.rotation.x = t * 0.004;
       stars.rotation.y = t * 0.014;
