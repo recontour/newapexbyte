@@ -38,22 +38,23 @@ export default function WebGLBackground() {
     renderer.domElement.style.pointerEvents = "none";
     container.appendChild(renderer.domElement);
 
-    // ── Glow texture ──
+    // ── Glow texture (brighter core so particles read on dark UI) ──
     const c = document.createElement("canvas");
     c.width = 64;
     c.height = 64;
     const ctx = c.getContext("2d")!;
     const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     grad.addColorStop(0, "rgba(255,255,255,1)");
-    grad.addColorStop(0.1, "rgba(255,255,255,0.8)");
-    grad.addColorStop(0.4, "rgba(255,255,255,0.2)");
+    grad.addColorStop(0.15, "rgba(255,255,255,0.95)");
+    grad.addColorStop(0.35, "rgba(255,255,255,0.45)");
+    grad.addColorStop(0.65, "rgba(255,255,255,0.12)");
     grad.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 64, 64);
     const texture = new THREE.CanvasTexture(c);
 
     // ── Layer 1: Dust field ──
-    const dustCount = 600;
+    const dustCount = 1400;
     const dustGeo = new THREE.BufferGeometry();
     const dustPos = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount; i++) {
@@ -63,10 +64,10 @@ export default function WebGLBackground() {
     }
     dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
     const dustMat = new THREE.PointsMaterial({
-      size: 3,
+      size: 5.5,
       map: texture,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       color: 0xffffff,
@@ -76,7 +77,7 @@ export default function WebGLBackground() {
     scene.add(dust);
 
     // ── Layer 2: Bright stars ──
-    const starCount = 100;
+    const starCount = 240;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
@@ -86,13 +87,13 @@ export default function WebGLBackground() {
     }
     starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
     const starMat = new THREE.PointsMaterial({
-      size: 6,
+      size: 10,
       map: texture,
       transparent: true,
-      opacity: 0.9,
+      opacity: 1,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      color: 0xddeeff,
+      color: 0xe8f0ff,
       sizeAttenuation: true,
     });
     const stars = new THREE.Points(starGeo, starMat);

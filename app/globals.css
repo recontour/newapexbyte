@@ -573,6 +573,12 @@ body.restaurant-active {
   overflow: hidden !important;
 }
 
+/* Keep the starfield visible; hide only the landing chrome behind the experience */
+body.restaurant-active .welcome-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .restaurant-portrait-wrapper {
   position: fixed !important;
   inset: 0 !important;
@@ -589,12 +595,13 @@ body.restaurant-active {
   overscroll-behavior: contain !important;
   overscroll-behavior-y: contain !important;
   -webkit-overflow-scrolling: touch;
-  background: #09090b;
+  background: transparent;
   animation: fadeInPortrait 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ═══════════════════════════════════════════════════════════ */
 /*  MOBILE PORTRAIT VIEWPORT CONTAINER FOR RESTAURANT ROOM    */
+/*  Transparent shell so the global WebGL starfield shows through */
 /* ═══════════════════════════════════════════════════════════ */
 .restaurant-experience-container {
   position: fixed !important;
@@ -608,9 +615,7 @@ body.restaurant-active {
   height: 100% !important;
   height: 100vh !important;
   height: 100dvh !important;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: transparent;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -623,7 +628,7 @@ body.restaurant-active {
   backface-visibility: hidden;
 }
 
-/* Mobile Frame Wrapper on PC/Desktop */
+/* Mobile Frame Wrapper on PC/Desktop — glass frame, no solid fill */
 .restaurant-experience-container > div:first-child,
 .restaurant-mobile-portrait-card {
   position: relative;
@@ -632,13 +637,12 @@ body.restaurant-active {
   height: 100%;
   max-height: 92vh;
   max-height: 92dvh;
-  background: radial-gradient(circle at 50% 0%, #141316 0%, #08080a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: calc(var(--vscale) * 24px);
   box-shadow:
-    0 30px 100px rgba(0, 0, 0, 0.95),
-    0 0 50px rgba(228, 218, 203, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -654,7 +658,7 @@ body.restaurant-active {
 @media (max-width: 480px) {
   .restaurant-experience-container {
     padding: 0 !important;
-    background: #09090b !important;
+    background: transparent !important;
   }
   .restaurant-experience-container > div:first-child,
   .restaurant-mobile-portrait-card {
@@ -664,6 +668,7 @@ body.restaurant-active {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    background: transparent !important;
   }
 }
 
@@ -681,14 +686,14 @@ body.restaurant-active {
   mix-blend-mode: screen;
 }
 
-/* Top Restrained Area */
+/* Top Restrained Area — frosted strip over the starfield */
 .restaurant-top-header {
   position: relative;
   z-index: 20;
-  background: rgba(9, 9, 11, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(9, 9, 11, 0.45);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: calc(var(--vscale) * 16px) calc(var(--vscale) * 20px) calc(var(--vscale) * 14px);
   display: flex;
   align-items: center;
@@ -750,8 +755,9 @@ body.restaurant-active {
 .restaurant-cat-nav {
   position: relative;
   z-index: 19;
-  background: rgba(12, 12, 15, 0.95);
-  backdrop-filter: blur(16px);
+  background: rgba(12, 12, 15, 0.4);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding: calc(var(--vscale) * 10px) calc(var(--vscale) * 16px);
   display: grid;
@@ -838,21 +844,40 @@ body.restaurant-active {
   gap: calc(var(--vscale) * 12px);
 }
 
-/* Dish Card Container */
+/* Dish Card Container — floating glass over the starfield */
 .dish-item-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(18, 17, 22, 0.55),
+    rgba(255, 255, 255, 0.03)
+  );
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: calc(var(--vscale) * 14px);
   padding: calc(var(--vscale) * 12px);
   display: flex;
   gap: calc(var(--vscale) * 12px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dish-item-card:hover {
-  background: rgba(255, 255, 255, 0.035);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.11),
+    rgba(22, 20, 28, 0.62),
+    rgba(255, 255, 255, 0.05)
+  );
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(228, 218, 203, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 /* Square Image Placeholder Block */
@@ -2104,7 +2129,7 @@ body.restaurant-active {
   height: 100vh !important;
   height: 100dvh !important;
   z-index: 999999 !important;
-  background: #09090b;
+  background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -2124,8 +2149,10 @@ body.restaurant-active {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--vscale) * 16px) calc(var(--vscale) * 28px);
-  background: #101014;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(16, 16, 20, 0.5);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
   box-sizing: border-box;
 }
@@ -2198,20 +2225,25 @@ body.restaurant-active {
   margin: 0 auto;
 }
 
-/* Main Order Card — Halved Side Padding */
+/* Main Order Card — floating glass over starfield */
 .kitchen-order-card {
   background: linear-gradient(
     165deg,
-    rgba(26, 24, 32, 0.92),
-    rgba(14, 13, 18, 0.96)
+    rgba(255, 255, 255, 0.08),
+    rgba(18, 17, 22, 0.58),
+    rgba(14, 13, 18, 0.5)
   );
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: calc(var(--vscale) * 16px);
   padding: calc(var(--vscale) * 20px) calc(var(--vscale) * 14px);
   display: flex;
   flex-direction: column;
   gap: calc(var(--vscale) * 20px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Card Header: Row 1 (Order #) + Row 2 (Table & Time) */
@@ -2602,13 +2634,22 @@ body.restaurant-active {
 }
 
 .kitchen-ai-card {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(18, 17, 22, 0.5)
+  );
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: calc(var(--vscale) * 12px);
   padding: calc(var(--vscale) * 16px) calc(var(--vscale) * 20px);
   display: flex;
   flex-direction: column;
   gap: calc(var(--vscale) * 12px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .kitchen-ai-header {
@@ -2750,7 +2791,7 @@ body.restaurant-active {
   height: 100vh !important;
   height: 100dvh !important;
   z-index: 999999 !important;
-  background: #09090b;
+  background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -2770,8 +2811,10 @@ body.restaurant-active {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--vscale) * 16px) calc(var(--vscale) * 28px);
-  background: #101014;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(16, 16, 20, 0.5);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
   box-sizing: border-box;
 }
@@ -2834,9 +2877,16 @@ body.restaurant-active {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--vscale) * 12px) calc(var(--vscale) * 16px);
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(18, 17, 22, 0.45)
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: calc(var(--vscale) * 10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .floor-summary-tag {
@@ -2868,8 +2918,14 @@ body.restaurant-active {
 }
 
 .floor-table-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(18, 17, 22, 0.52)
+  );
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: calc(var(--vscale) * 14px);
   padding: calc(var(--vscale) * 16px);
   display: flex;
@@ -2879,6 +2935,9 @@ body.restaurant-active {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -3511,7 +3570,7 @@ body.restaurant-active {
   height: 100vh !important;
   height: 100dvh !important;
   z-index: 999999 !important;
-  background: #09090b;
+  background: transparent;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -3531,8 +3590,10 @@ body.restaurant-active {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--vscale) * 16px) calc(var(--vscale) * 28px);
-  background: #101014;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(16, 16, 20, 0.5);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
   box-sizing: border-box;
 }
@@ -3614,16 +3675,21 @@ body.restaurant-active {
 .metric-card {
   background: linear-gradient(
     165deg,
-    rgba(26, 24, 32, 0.9),
-    rgba(14, 13, 18, 0.95)
+    rgba(255, 255, 255, 0.08),
+    rgba(18, 17, 22, 0.55)
   );
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: calc(var(--vscale) * 12px);
   padding: calc(var(--vscale) * 12px) calc(var(--vscale) * 12px);
   display: flex;
   flex-direction: column;
   gap: calc(var(--vscale) * 2px);
   justify-content: center;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .metric-label {
