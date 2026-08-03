@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface OrderItem {
@@ -17,7 +17,7 @@ interface Props {
   onOpenManagerView?: () => void;
 }
 
-export type TableStatus = "Available" | "OTP Requested" | "Order Placed" | "Ready" | "Served" | "Occupied";
+export type TableStatus = "Available" | "OTP Requested" | "Placing Order" | "Order Placed" | "Ready" | "Served" | "Occupied";
 
 interface TableData {
   id: number;
@@ -59,6 +59,45 @@ export default function FloorViewExperience({ onClose, selectedDishes = [], onOp
   const [selectedTable, setSelectedTable] = useState<TableData | null>(null);
 
   const [showBottomDashboardBtn, setShowBottomDashboardBtn] = useState<boolean>(false);
+
+  // OTP Demo Modal State Machine for Table 1
+  const [otpState, setOtpState] = useState<"idle" | "generated" | "placing" | "placed">("idle");
+  const [mockOtp, setMockOtp] = useState<string>("7842");
+  const [timerSec, setTimerSec] = useState<number>(45);
+
+  // Live countdown timer when OTP is generated
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpState === "generated") {
+      interval = setInterval(() => {
+        setTimerSec((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpState]);
+
+  // Handle Generate OTP Click on Table 1
+  const handleGenerateOtp = () => {
+    const randomOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    setMockOtp(randomOtp);
+    setOtpState("generated");
+
+    // After 2.5s -> Customer enters OTP -> Table 1 status becomes "Placing Order"
+    setTimeout(() => {
+      setOtpState("placing");
+      setTables((prev) =>
+        prev.map((t) =>
+          t.id === 1 ? { ...t, status: "Placing Order", secondaryInfo: "Guest selecting dishes..." } : t
+        )
+      );
+
+      // After 1.5s -> Close modal while keeping Table 1 in "Placing Order" state
+      setTimeout(() => {
+        setSelectedTable(null);
+        setOtpState("idle");
+      }, 1500);
+    }, 2500);
+  };
 
   // Handle Mark as Served action: close modal, update floor state, hold for 1.5s, then pop bottom button
   const handleMarkAsServed = (tableId: number) => {
@@ -105,13 +144,26 @@ export default function FloorViewExperience({ onClose, selectedDishes = [], onOp
         <div className="floor-table-grid">
           {tables.map((table) => {
             const isReady = table.status === "Ready";
+            const isOtp = table.status === "OTP Requested";
+            const isPlacing = table.status === "Placing Order";
+            const isOrderPlaced = table.status === "Order Placed";
+
+            const highlightClass = isReady
+              ? "ready-highlight"
+              : isOtp
+              ? "otp-highlight"
+              : isPlacing
+              ? "placing-highlight"
+              : isOrderPlaced
+              ? "order-placed-highlight"
+              : "";
 
             return (
               <div
                 key={table.id}
-                className={`floor-table-card ${isReady ? "ready-highlight" : ""} status-${table.status.toLowerCase().replace(/\s+/g, "-")}`}
+                className={`floor-table-card ${highlightClass} status-${table.status.toLowerCase().replace(/\s+/g, "-")}`}
                 onClick={() => {
-                  if (table.id === 4 || isReady || table.status === "Served") {
+                  if (table.id === 1 || table.id === 4 || isReady || table.status === "Served") {
                     setSelectedTable(table);
                   }
                 }}
@@ -133,9 +185,9 @@ export default function FloorViewExperience({ onClose, selectedDishes = [], onOp
                   <div className="table-action-hint">
                     <span>Tap to Serve →</span>
                   </div>
-                ) : table.status === "Served" && onOpenManagerView ? (
-                  <div className="table-action-hint dashboard-hint">
-                    <span>View Owner Dashboard →</span>
+                ) : isOtp ? (
+                  <div className="table-action-hint otp-hint">
+                    <span>Tap for OTP →</span>
                   </div>
                 ) : null}
               </div>
@@ -179,44 +231,106 @@ export default function FloorViewExperience({ onClose, selectedDishes = [], onOp
                 </button>
               </div>
 
-              {/* Order Items Summary */}
-              {selectedTable.items && (
-                <div className="detail-items-section">
-                  <span className="detail-section-label">ORDER ITEMS</span>
-                  <div className="detail-items-list">
-                    {selectedTable.items.map((item, idx) => (
-                      <div key={idx} className="detail-item-row">
-                        <span className="detail-item-qty">{item.quantity}×</span>
-                        <span className="detail-item-name">{item.name}</span>
+              {/* Modal Body: Custom OTP Generator View for Table 1 vs Standard Table Review */}
+              {selectedTable.id === 1 ? (
+                <div className="otp-modal-body">
+                  <div className="otp-modal-header">
+                    <span className="otp-modal-tag">TABLE 1 · GUEST ACCESS</span>
+                    <p className="otp-modal-desc">
+                      {otpState === "idle"
+                        ? "Guest scanned table QR. Generate OTP to verify guest access."
+                        : otpState === "generated"
+                        ? "Waiting for customer to enter OTP..."
+                        : otpState === "placing"
+                        ? "OTP Verified! Placing guest order..."
+                        : "Order placed successfully!"}
+                    </p>
+                  </div>
+
+                  {otpState === "generated" && (
+                    <div className="otp-display-card">
+                      <span className="otp-card-label">MOCK GUEST OTP</span>
+                      <div className="otp-code-digits">
+                        {mockOtp.split("").map((digit, i) => (
+                          <span key={i} className="otp-digit">{digit}</span>
+                        ))}
                       </div>
-                    ))}
+                      <div className="otp-timer-indicator">
+                        <span className="otp-pulse-dot" />
+                        <span>Customer entering OTP... 0:{timerSec < 10 ? `0${timerSec}` : timerSec}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {otpState === "placing" && (
+                    <div className="otp-placing-card">
+                      <span className="otp-spinner-dot" />
+                      <span>VERIFYING OTP · PLACING ORDER...</span>
+                    </div>
+                  )}
+
+                  {/* Primary Action Button */}
+                  <div className="detail-action-section">
+                    {otpState === "idle" ? (
+                      <button
+                        className="generate-otp-btn"
+                        onClick={handleGenerateOtp}
+                      >
+                        GENERATE OTP
+                      </button>
+                    ) : otpState === "generated" ? (
+                      <button className="generate-otp-btn active-state" disabled>
+                        OTP SENT · WAITING FOR GUEST...
+                      </button>
+                    ) : (
+                      <button className="generate-otp-btn placing-state" disabled>
+                        PLACING ORDER...
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Order Items Summary */}
+                  {selectedTable.items && (
+                    <div className="detail-items-section">
+                      <span className="detail-section-label">ORDER ITEMS</span>
+                      <div className="detail-items-list">
+                        {selectedTable.items.map((item, idx) => (
+                          <div key={idx} className="detail-item-row">
+                            <span className="detail-item-qty">{item.quantity}×</span>
+                            <span className="detail-item-name">{item.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Special Instructions */}
-              {selectedTable.specialInstructions && (
-                <div className="detail-notes-section">
-                  <span className="detail-notes-label">SPECIAL INSTRUCTIONS</span>
-                  <p className="detail-notes-text">{selectedTable.specialInstructions}</p>
-                </div>
-              )}
+                  {/* Special Instructions */}
+                  {selectedTable.specialInstructions && (
+                    <div className="detail-notes-section">
+                      <span className="detail-notes-label">SPECIAL INSTRUCTIONS</span>
+                      <p className="detail-notes-text">{selectedTable.specialInstructions}</p>
+                    </div>
+                  )}
 
-              {/* Primary Action Button */}
-              <div className="detail-action-section">
-                {selectedTable.status === "Ready" ? (
-                  <button
-                    className="mark-served-btn"
-                    onClick={() => handleMarkAsServed(selectedTable.id)}
-                  >
-                    MARK AS SERVED
-                  </button>
-                ) : (
-                  <div className="already-served-badge">
-                    <span>STATUS: {selectedTable.status.toUpperCase()}</span>
+                  {/* Primary Action Button */}
+                  <div className="detail-action-section">
+                    {selectedTable.status === "Ready" ? (
+                      <button
+                        className="mark-served-btn"
+                        onClick={() => handleMarkAsServed(selectedTable.id)}
+                      >
+                        MARK AS SERVED
+                      </button>
+                    ) : (
+                      <div className="already-served-badge">
+                        <span>STATUS: {selectedTable.status.toUpperCase()}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

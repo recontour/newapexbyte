@@ -181,19 +181,19 @@ export default function KitchenViewExperience({ onClose, selectedDishes, totalPr
             <span className="status-control-label">STATUS</span>
             <div className="kitchen-status-toggle-bar">
               <button
-                className={`status-toggle-btn ${activeStage === "RECEIVED" ? "active" : ""}`}
+                className={`status-toggle-btn status-btn-received ${activeStage === "RECEIVED" ? "active" : ""}`}
                 onClick={() => handleStageChange("RECEIVED")}
               >
                 Received
               </button>
               <button
-                className={`status-toggle-btn ${activeStage === "PREPARING" ? "active" : ""}`}
+                className={`status-toggle-btn status-btn-preparing ${activeStage === "PREPARING" ? "active" : ""}`}
                 onClick={() => handleStageChange("PREPARING")}
               >
                 Preparing
               </button>
               <button
-                className={`status-toggle-btn ${activeStage === "READY" ? "active" : ""}`}
+                className={`status-toggle-btn status-btn-ready ${activeStage === "READY" ? "active" : ""}`}
                 onClick={() => handleStageChange("READY")}
               >
                 Ready
