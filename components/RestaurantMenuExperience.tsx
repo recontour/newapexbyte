@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import KitchenViewExperience from "./KitchenViewExperience";
+import FloorViewExperience from "./FloorViewExperience";
+import ManagerViewExperience from "./ManagerViewExperience";
+
 
 
 interface DishItem {
@@ -95,6 +99,8 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [floorModalOpen, setFloorModalOpen] = useState(false);
+  const [managerModalOpen, setManagerModalOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -324,34 +330,54 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     }, 400);
   };
 
+  type OrderStatus = "idle" | "preparing" | "ready";
+
   const [orderWindowOpen, setOrderWindowOpen] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>("idle");
+  const [kitchenModalOpen, setKitchenModalOpen] = useState(false);
 
   // Filter list of items with quantity > 0
   const selectedDishes = MENU_DATA.filter((item) => (quantities[item.id] || 0) > 0);
 
+  // Auto-close expanded order window if all items are removed
+  useEffect(() => {
+    if (orderWindowOpen && totalItems === 0) {
+      setOrderWindowOpen(false);
+    }
+  }, [totalItems, orderWindowOpen]);
+
   const handleConfirmOrder = () => {
     setOrderConfirmed(true);
     setTimeout(() => {
-      setOrderConfirmed(false);
       setOrderWindowOpen(false);
-    }, 1800);
+      setOrderConfirmed(false);
+      setOrderStatus("preparing");
+
+      // Hold "PREPARING YOUR ORDER" state for 1.8s, then populate "SEE KITCHEN VIEW" button on top
+      setTimeout(() => {
+        setOrderStatus("ready");
+      }, 1800);
+    }, 450);
   };
 
   return (
-    <motion.div
+    <div
       ref={containerRef}
-      className={`restaurant-experience-container ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
-      initial={{ opacity: 0, scale: 0.985 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="restaurant-experience-container"
       onWheel={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
     >
-      {/* WebGL Ambient Depth Canvas Overlay */}
-      <canvas ref={canvasRef} className="restaurant-ambient-canvas" />
+      <motion.div
+        className={`restaurant-mobile-portrait-card ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* WebGL Ambient Depth Canvas Overlay */}
+        <canvas ref={canvasRef} className="restaurant-ambient-canvas" />
 
       {/* Top Restrained Header */}
       <motion.header
@@ -488,107 +514,217 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
         })}
       </div>
 
-      {/* Refined Bottom Order Bar */}
-      {totalItems > 0 && !orderWindowOpen && (
-        <div className="restaurant-summary-bar" onClick={() => setOrderWindowOpen(true)}>
-          <div className="summary-left">
-            <span className="summary-count">YOUR ORDER</span>
-            <span className="summary-price">{totalItems} {totalItems === 1 ? "item" : "items"} · ₹{totalPrice}</span>
-          </div>
-          <button
-            className="summary-view-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOrderWindowOpen(true);
+      {/* Collapsed Bottom Order Stack */}
+      <AnimatePresence>
+        {totalItems > 0 && !orderWindowOpen && (
+          <motion.div
+            key="order-bottom-stack"
+            className="order-bottom-stack"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 25,
             }}
           >
-            CONFIRM →
-          </button>
-        </div>
-      )}
+            {/* Populated "SEE KITCHEN VIEW" button directly on top after 1.8s */}
+            <AnimatePresence>
+              {orderStatus === "ready" && (
+                <motion.button
+                  key="kitchen-view-btn"
+                  className="kitchen-view-floating-btn"
+                  initial={{ y: 20, opacity: 0, scale: 0.92 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: 20, opacity: 0, scale: 0.92 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 22 }}
+                  onClick={() => setKitchenModalOpen(true)}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <span>SEE KITCHEN VIEW</span>
+                  <span className="btn-arrow">→</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
 
-      {/* Expanded Order Window Modal */}
-      {orderWindowOpen && (
-        <div className="order-modal-overlay" onClick={() => setOrderWindowOpen(false)}>
-          <div className="order-modal-card" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className="order-modal-header">
-              <div className="order-header-title-group">
-                <h2 className="order-modal-title">YOUR ORDER</h2>
-                <span className="order-header-subtitle">
-                  {totalItems} {totalItems === 1 ? "item" : "items"} selected
-                </span>
-              </div>
-              <button
-                className="order-modal-close"
-                onClick={() => setOrderWindowOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Selected Items List */}
-            <div className="order-items-scroll">
-              {selectedDishes.map((dish) => {
-                const qty = quantities[dish.id] || 0;
-                return (
-                  <div key={dish.id} className="order-item-row">
-                    <div className="order-item-left">
-                      <span className="order-item-icon">{dish.icon}</span>
-                      <div className="order-item-meta">
-                        <span className="order-item-name">{dish.name}</span>
-                        <span className="order-item-unit">₹{dish.price} each</span>
-                      </div>
-                    </div>
-                    <div className="order-item-right">
-                      <div className="dish-counter-box small">
-                        <button
-                          className="counter-btn"
-                          onClick={() => handleRemove(dish.id)}
-                        >
-                          −
-                        </button>
-                        <span className="counter-num">{qty}</span>
-                        <button
-                          className="counter-btn"
-                          onClick={() => handleAdd(dish.id)}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <span className="order-item-total">₹{dish.price * qty}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Price Breakdown */}
-            <div className="order-summary-breakdown">
-              <div className="breakdown-row">
-                <span>Subtotal</span>
-                <span>₹{totalPrice}</span>
-              </div>
-              <div className="breakdown-row">
-                <span>Taxes & Service</span>
-                <span className="breakdown-included">Included</span>
-              </div>
-              <div className="breakdown-row total">
-                <span>Total Amount</span>
-                <span>₹{totalPrice}</span>
-              </div>
-            </div>
-
-            {/* Bottom Action Button */}
-            <button
-              className={`order-final-confirm-btn ${orderConfirmed ? "confirmed" : ""}`}
-              onClick={handleConfirmOrder}
+            {/* Collapsed Summary / Preparing Bar */}
+            <motion.div
+              key="summary-bar"
+              className={`restaurant-summary-bar centered ${orderStatus !== "idle" ? "preparing-active" : ""}`}
+              onClick={() => {
+                if (orderStatus === "idle") {
+                  setOrderWindowOpen(true);
+                } else {
+                  setKitchenModalOpen(true);
+                }
+              }}
+              whileHover={{
+                y: -2,
+                boxShadow: "0 24px 60px rgba(0,0,0,0.9), 0 0 40px rgba(228,218,203,0.06), inset 0 1px 0 rgba(255,255,255,0.3)",
+                transition: { duration: 0.4, ease: "easeOut" },
+              }}
+              whileTap={{ scale: 0.97 }}
             >
-              {orderConfirmed ? "ORDER CONFIRMED ✨" : "CONFIRM ORDER"}
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="summary-center-content">
+                {orderStatus !== "idle" && (
+                  <span className="preparing-indicator-dot" />
+                )}
+                <span className="summary-count">
+                  {orderStatus === "idle" ? "ORDER SUMMARY" : "PREPARING YOUR ORDER"}
+                </span>
+                <span className="summary-divider">•</span>
+                <motion.span
+                  key={`${totalItems}-${totalPrice}`}
+                  className="summary-price"
+                  initial={{ scale: 1.08 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {totalItems} {totalItems === 1 ? "item" : "items"} · ₹{totalPrice}
+                </motion.span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Fresh Clean Expanded Order Window Modal */}
+      <AnimatePresence>
+        {orderWindowOpen && (
+          <motion.div
+            key="order-modal-overlay"
+            className="order-modal-overlay"
+            initial={{ opacity: 0, backgroundColor: "rgba(0,0,0,0)" }}
+            animate={{ opacity: 1, backgroundColor: "rgba(0,0,0,0.65)" }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            onClick={() => setOrderWindowOpen(false)}
+          >
+            <motion.div
+              key="order-modal-card"
+              className="order-modal-card"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ y: "100%", opacity: 0.4, scale: 0.985 }}
+              animate={{
+                y: 0,
+                opacity: 1,
+                scale: 1,
+                boxShadow: "0 -25px 80px rgba(0,0,0,0.95), 0 -4px 20px rgba(228,218,203,0.03), inset 0 1px 0 rgba(255,255,255,0.22)",
+              }}
+              exit={{ y: "100%", opacity: 0, scale: 0.985, transition: { duration: 0.25, ease: "easeIn" } }}
+              transition={{
+                duration: 0.65,
+                ease: [0.05, 0.9, 0.08, 1.0],
+                scale: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+              }}
+            >
+              {/* Header */}
+              <div className="order-modal-header">
+                <div className="order-header-title-group">
+                  <h2 className="order-modal-title">YOUR ORDER</h2>
+                  <span className="order-header-subtitle">
+                    {totalItems} {totalItems === 1 ? "item" : "items"} selected
+                  </span>
+                </div>
+                <button
+                  className="order-modal-close"
+                  onClick={() => setOrderWindowOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Selected Items List */}
+              <div className="order-items-scroll">
+                {selectedDishes.map((dish) => {
+                  const qty = quantities[dish.id] || 0;
+                  return (
+                    <div key={dish.id} className="order-item-card">
+                      {/* Row 1: Dish Icon & Name Only */}
+                      <div className="order-item-header">
+                        <div className="order-item-info">
+                          <span className="order-item-icon">{dish.icon}</span>
+                          <span className="order-item-name">{dish.name}</span>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Counter Pill, Unit Price, and Total Price in one single row */}
+                      <div className="order-item-controls">
+                        <div className="order-item-counter-bar">
+                          <button
+                            className="order-counter-btn"
+                            onClick={() => handleRemove(dish.id)}
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className="order-counter-qty">{qty}</span>
+                          <button
+                            className="order-counter-btn"
+                            onClick={() => handleAdd(dish.id)}
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <span className="order-item-unit">₹{dish.price} each</span>
+                        <span className="order-item-total">₹{dish.price * qty}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="order-summary-breakdown">
+                <div className="breakdown-row">
+                  <span>Subtotal</span>
+                  <span>₹{totalPrice}</span>
+                </div>
+                <div className="breakdown-row">
+                  <span>Taxes & Service</span>
+                  <span className="breakdown-included">Included</span>
+                </div>
+                <div className="breakdown-row total">
+                  <span>Total Amount</span>
+                  <span>₹{totalPrice}</span>
+                </div>
+              </div>
+
+              {/* Bottom Action Row with AI Help Button */}
+              <div className="order-modal-actions-row">
+                <button
+                  className="order-ai-help-btn"
+                  onClick={() => {
+                    setActiveAiDish(null);
+                    setChatMessages([
+                      {
+                        id: "m1",
+                        sender: "assistant",
+                        text: "Namaste! I am your Culinary Curator. Have questions about your selected order or need recommendations? Ask me anything!",
+                      },
+                    ]);
+                    setAiDrawerOpen(true);
+                  }}
+                >
+                  <span>✨</span>
+                  <span>CURATOR AI</span>
+                </button>
+
+                <button
+                  className={`order-final-confirm-btn ${orderConfirmed ? "confirmed" : ""}`}
+                  onClick={handleConfirmOrder}
+                >
+                  {orderConfirmed ? "ORDER CONFIRMED ✨" : "CONFIRM ORDER"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* AI Conversation Layer Drawer */}
       {aiDrawerOpen && (
@@ -635,6 +771,57 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
           </div>
         </div>
       )}
-    </motion.div>
+
+      {/* Fullscreen Kitchen View Experience */}
+      <AnimatePresence>
+        {kitchenModalOpen && (
+          <KitchenViewExperience
+            onClose={() => setKitchenModalOpen(false)}
+            selectedDishes={selectedDishes.map((dish) => ({
+              id: dish.id,
+              name: dish.name,
+              price: dish.price,
+              category: dish.category,
+              quantity: quantities[dish.id] || 1,
+            }))}
+            totalPrice={totalPrice}
+            onOpenFloorView={() => {
+              setKitchenModalOpen(false);
+              setFloorModalOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen Floor View Experience */}
+      <AnimatePresence>
+        {floorModalOpen && (
+          <FloorViewExperience
+            onClose={() => setFloorModalOpen(false)}
+            selectedDishes={selectedDishes.map((dish) => ({
+              id: dish.id,
+              name: dish.name,
+              price: dish.price,
+              category: dish.category,
+              quantity: quantities[dish.id] || 1,
+            }))}
+            onOpenManagerView={() => {
+              setFloorModalOpen(false);
+              setManagerModalOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen Manager / Owner View Experience */}
+      <AnimatePresence>
+        {managerModalOpen && (
+          <ManagerViewExperience
+            onClose={() => setManagerModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      </motion.div>
+    </div>
   );
 }
