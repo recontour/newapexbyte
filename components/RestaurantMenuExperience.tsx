@@ -182,6 +182,13 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
 
+      // Reset starfield overlay parallax when leaving the menu
+      window.dispatchEvent(
+        new CustomEvent("apex-overlay-scroll", {
+          detail: { scrollTop: 0, progress: 0 },
+        })
+      );
+
       // Restore scroll position after releasing the lock
       window.scrollTo(0, scrollY);
     };
@@ -240,12 +247,19 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     return () => cancelAnimationFrame(animId);
   }, [scrollProgress]);
 
-  // Track scroll position inside menu & sync active category pill via ScrollSpy
+  // Track scroll position inside menu & sync active category pill via ScrollSpy.
+  // Also nudges the global WebGL starfield (subtle parallax while body scroll is locked).
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     const progress = scrollTop / (scrollHeight - clientHeight || 1);
     setScrollProgress(progress);
+
+    window.dispatchEvent(
+      new CustomEvent("apex-overlay-scroll", {
+        detail: { scrollTop, progress },
+      })
+    );
 
     const scrollContainerRect = scrollRef.current.getBoundingClientRect();
     let currentCat: string = CATEGORIES[0];
