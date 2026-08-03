@@ -190,6 +190,8 @@ export default function WebGLBackground() {
   return (
     <div
       ref={mountRef}
+      className="webgl-background"
+      aria-hidden="true"
       style={{
         position: "fixed",
         inset: 0,

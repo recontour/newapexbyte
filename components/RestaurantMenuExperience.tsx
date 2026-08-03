@@ -383,15 +383,21 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
     }, 450);
   };
 
+  // Only one layer of the flow is mounted at a time so transparent shells
+  // never stack menu + kitchen + floor + owner UI on top of each other.
+  const isDeepViewOpen = kitchenModalOpen || floorModalOpen || managerModalOpen;
+
   return (
     <div
       ref={containerRef}
-      className="restaurant-experience-container"
+      className={`restaurant-experience-container ${isDeepViewOpen ? "deep-view-open" : ""}`}
       onWheel={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
     >
+      {/* Menu shell — fully unmounted while kitchen / floor / owner is open */}
+      {!isDeepViewOpen && (
       <motion.div
         className={`restaurant-mobile-portrait-card ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
         // Opacity-only entrance: any transform on this card creates a containing
@@ -856,10 +862,14 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
         </div>
       )}
 
-      {/* Fullscreen Kitchen View Experience */}
-      <AnimatePresence>
+      </motion.div>
+      )}
+
+      {/* Deep views live as siblings of the menu shell — never stacked under it */}
+      <AnimatePresence mode="wait">
         {kitchenModalOpen && (
           <KitchenViewExperience
+            key="kitchen-view"
             onClose={() => setKitchenModalOpen(false)}
             selectedDishes={selectedDishes.map((dish) => ({
               id: dish.id,
@@ -875,12 +885,9 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
             }}
           />
         )}
-      </AnimatePresence>
-
-      {/* Fullscreen Floor View Experience */}
-      <AnimatePresence>
         {floorModalOpen && (
           <FloorViewExperience
+            key="floor-view"
             onClose={() => setFloorModalOpen(false)}
             selectedDishes={selectedDishes.map((dish) => ({
               id: dish.id,
@@ -895,17 +902,13 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
             }}
           />
         )}
-      </AnimatePresence>
-
-      {/* Fullscreen Manager / Owner View Experience */}
-      <AnimatePresence>
         {managerModalOpen && (
           <ManagerViewExperience
+            key="manager-view"
             onClose={() => setManagerModalOpen(false)}
           />
         )}
       </AnimatePresence>
-      </motion.div>
     </div>
   );
 }

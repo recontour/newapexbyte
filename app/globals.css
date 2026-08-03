@@ -573,10 +573,22 @@ body.restaurant-active {
   overflow: hidden !important;
 }
 
-/* Keep the starfield visible; hide only the landing chrome behind the experience */
+/* Keep the starfield visible; fully remove landing chrome from view/hit-testing.
+   (Showcase must stay mounted — RestaurantMenuExperience lives inside it.) */
 body.restaurant-active .welcome-container {
   opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none !important;
+  position: absolute !important;
+  inset: 0 auto auto 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.restaurant-active .showcase-section.is-selected-view {
+  background: transparent !important;
+  min-height: 0 !important;
 }
 
 .restaurant-portrait-wrapper {
