@@ -749,7 +749,7 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
                   className={`order-final-confirm-btn ${orderConfirmed ? "confirmed" : ""}`}
                   onClick={handleConfirmOrder}
                 >
-                  {orderConfirmed ? "ORDER CONFIRMED ✨" : "CONFIRM ORDER"}
+                  {orderConfirmed ? "ORDER CONFIRMED" : "CONFIRM ORDER"}
                 </button>
               </div>
 
