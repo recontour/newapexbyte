@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { flowSlideProps } from "./restaurantFlowMotion";
 
 export interface OrderItem {
   id: string;
@@ -16,9 +17,17 @@ interface Props {
   selectedDishes: OrderItem[];
   totalPrice: number;
   onOpenFloorView?: () => void;
+  /** 1 = forward, -1 = back — drives elegant side transition */
+  flowDirection?: number;
 }
 
-export default function KitchenViewExperience({ onClose, selectedDishes, totalPrice, onOpenFloorView }: Props) {
+export default function KitchenViewExperience({
+  onClose,
+  selectedDishes,
+  totalPrice,
+  onOpenFloorView,
+  flowDirection = 1,
+}: Props) {
   const [istTime, setIstTime] = useState<string>("");
   const [activeStage, setActiveStage] = useState<"RECEIVED" | "PREPARING" | "READY">("RECEIVED");
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
@@ -88,11 +97,8 @@ export default function KitchenViewExperience({ onClose, selectedDishes, totalPr
 
   return (
     <motion.div
-      className="kitchen-view-fullscreen"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      className="kitchen-view-fullscreen flow-slide-panel"
+      {...flowSlideProps(flowDirection)}
     >
       {/* 1. Fullscreen Header — Simplified & Quiet */}
       <header className="kitchen-view-header">

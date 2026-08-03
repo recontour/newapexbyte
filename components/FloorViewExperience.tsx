@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { flowSlideProps } from "./restaurantFlowMotion";
 
 export interface OrderItem {
   id: string;
@@ -15,6 +16,8 @@ interface Props {
   onClose: () => void;
   selectedDishes?: OrderItem[];
   onOpenManagerView?: () => void;
+  /** 1 = forward, -1 = back — drives elegant side transition */
+  flowDirection?: number;
 }
 
 export type TableStatus = "Available" | "OTP Requested" | "Placing Order" | "Order Placed" | "Ready" | "Served" | "Occupied";
@@ -29,7 +32,12 @@ interface TableData {
   specialInstructions?: string;
 }
 
-export default function FloorViewExperience({ onClose, selectedDishes = [], onOpenManagerView }: Props) {
+export default function FloorViewExperience({
+  onClose,
+  selectedDishes = [],
+  onOpenManagerView,
+  flowDirection = 1,
+}: Props) {
   // Demo items for Table 4 if none passed
   const demoItems = selectedDishes.length > 0
     ? selectedDishes.map((d) => ({ name: d.name, quantity: d.quantity }))
@@ -114,11 +122,8 @@ export default function FloorViewExperience({ onClose, selectedDishes = [], onOp
 
   return (
     <motion.div
-      className="floor-view-fullscreen"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      className="floor-view-fullscreen flow-slide-panel"
+      {...flowSlideProps(flowDirection)}
     >
       {/* 1. Header */}
       <header className="floor-view-header">

@@ -640,6 +640,19 @@ body.restaurant-active .showcase-section.is-selected-view {
   backface-visibility: hidden;
 }
 
+/* Stack navigator stage — clips simultaneous side-slide transitions */
+.restaurant-experience-container.flow-stage {
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+/* Shared panel chrome for menu / kitchen / floor / owner slides */
+.flow-slide-panel {
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 /* Mobile Frame Wrapper on PC/Desktop — glass frame, no solid fill */
 .restaurant-experience-container > div:first-child,
 .restaurant-mobile-portrait-card {

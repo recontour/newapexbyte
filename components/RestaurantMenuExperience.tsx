@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import KitchenViewExperience from "./KitchenViewExperience";
 import FloorViewExperience from "./FloorViewExperience";
 import ManagerViewExperience from "./ManagerViewExperience";
+import { flowSlideProps } from "./restaurantFlowMotion";
 
 
 
@@ -401,25 +402,58 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
   // never stack menu + kitchen + floor + owner UI on top of each other.
   const isDeepViewOpen = kitchenModalOpen || floorModalOpen || managerModalOpen;
 
+  // 1 = forward (next view from the right), -1 = back (previous from the left)
+  const [flowDirection, setFlowDirection] = useState(1);
+
+  const goForwardToKitchen = () => {
+    setFlowDirection(1);
+    setKitchenModalOpen(true);
+  };
+  const goBackFromKitchen = () => {
+    setFlowDirection(-1);
+    setKitchenModalOpen(false);
+  };
+  const goForwardToFloor = () => {
+    setFlowDirection(1);
+    setKitchenModalOpen(false);
+    setFloorModalOpen(true);
+  };
+  const goBackFromFloor = () => {
+    setFlowDirection(-1);
+    setFloorModalOpen(false);
+    setKitchenModalOpen(true);
+  };
+  const goForwardToManager = () => {
+    setFlowDirection(1);
+    setFloorModalOpen(false);
+    setManagerModalOpen(true);
+  };
+  const goBackFromManager = () => {
+    setFlowDirection(-1);
+    setManagerModalOpen(false);
+    setFloorModalOpen(true);
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`restaurant-experience-container ${isDeepViewOpen ? "deep-view-open" : ""}`}
+      className={`restaurant-experience-container flow-stage ${isDeepViewOpen ? "deep-view-open" : ""}`}
       onWheel={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
     >
-      {/* Menu shell — fully unmounted while kitchen / floor / owner is open */}
+      {/*
+        Shared stack navigator: menu ⇄ kitchen ⇄ floor ⇄ owner.
+        mode="sync" so outgoing slides left while incoming glides in from the side.
+      */}
+      <AnimatePresence mode="sync" custom={flowDirection} initial={false}>
+      {/* Menu shell — unmounted while a deep view is active */}
       {!isDeepViewOpen && (
       <motion.div
-        className={`restaurant-mobile-portrait-card ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
-        // Opacity-only entrance: any transform on this card creates a containing
-        // block that traps position:fixed children (kitchen/floor CTAs) and offsets
-        // touch hit-targets on mobile Safari.
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        key="menu-view"
+        className={`restaurant-mobile-portrait-card flow-slide-panel ${aiDrawerOpen || orderWindowOpen ? "ai-drawer-open" : ""}`}
+        {...flowSlideProps(flowDirection)}
       >
         {/* WebGL Ambient Depth Canvas Overlay */}
         <canvas ref={canvasRef} className="restaurant-ambient-canvas" />
@@ -584,7 +618,7 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
                   animate={{ y: 0, opacity: 1, scale: 1 }}
                   exit={{ y: 20, opacity: 0, scale: 0.92 }}
                   transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                  onClick={() => setKitchenModalOpen(true)}
+                  onClick={goForwardToKitchen}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -602,7 +636,7 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
                 if (orderStatus === "idle") {
                   setOrderWindowOpen(true);
                 } else {
-                  setKitchenModalOpen(true);
+                  goForwardToKitchen();
                 }
               }}
               whileHover={{
@@ -879,12 +913,11 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
       </motion.div>
       )}
 
-      {/* Deep views live as siblings of the menu shell — never stacked under it */}
-      <AnimatePresence mode="wait">
         {kitchenModalOpen && (
           <KitchenViewExperience
             key="kitchen-view"
-            onClose={() => setKitchenModalOpen(false)}
+            flowDirection={flowDirection}
+            onClose={goBackFromKitchen}
             selectedDishes={selectedDishes.map((dish) => ({
               id: dish.id,
               name: dish.name,
@@ -893,16 +926,14 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
               quantity: quantities[dish.id] || 1,
             }))}
             totalPrice={totalPrice}
-            onOpenFloorView={() => {
-              setKitchenModalOpen(false);
-              setFloorModalOpen(true);
-            }}
+            onOpenFloorView={goForwardToFloor}
           />
         )}
         {floorModalOpen && (
           <FloorViewExperience
             key="floor-view"
-            onClose={() => setFloorModalOpen(false)}
+            flowDirection={flowDirection}
+            onClose={goBackFromFloor}
             selectedDishes={selectedDishes.map((dish) => ({
               id: dish.id,
               name: dish.name,
@@ -910,16 +941,14 @@ export default function RestaurantMenuExperience({ onClose }: Props) {
               category: dish.category,
               quantity: quantities[dish.id] || 1,
             }))}
-            onOpenManagerView={() => {
-              setFloorModalOpen(false);
-              setManagerModalOpen(true);
-            }}
+            onOpenManagerView={goForwardToManager}
           />
         )}
         {managerModalOpen && (
           <ManagerViewExperience
             key="manager-view"
-            onClose={() => setManagerModalOpen(false)}
+            flowDirection={flowDirection}
+            onClose={goBackFromManager}
           />
         )}
       </AnimatePresence>
